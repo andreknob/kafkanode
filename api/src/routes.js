@@ -1,10 +1,12 @@
 import { Router } from 'express';
+import { CompressionTypes } from 'kafkajs';
 
 const routes = Router();
 
 routes.post('/certifications', async (req, res) => {
     await req.producer.send({
         topic: 'issue-certificate',
+        compression: CompressionTypes.GZIP,
         messages: [
             { 
                 value: JSON.stringify({
