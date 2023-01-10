@@ -11,6 +11,7 @@ const kafka = new Kafka({
 });
 
 const producer = kafka.producer();
+const consumer = kafka.consumer({ groupId: 'api-group' });
 
 app.use((req, res, next) => {
     req.producer = producer;
@@ -23,6 +24,16 @@ app.use(routes);
 
 async function run() {
     await producer.connect();
+
+    await consumer.connect();
+
+    await consumer.subscribe({ topic: 'certificate-response' });
+
+    await consumer.run({
+        eachMessage: async ({ topic, partition, message }) => {
+            console.log(`response - ${message.value}`);
+        }
+    })
 
     app.listen(3333);
 }

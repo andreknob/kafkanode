@@ -5,17 +5,17 @@ const kafka = new Kafka({
     clientId: 'certificate',
 });
 
-const topic = 'issue-certificate';
 const consumer = kafka.consumer({ groupId: 'certificate-group' });
 
 const producer = kafka.producer();
 
-let counter = 0;
 
 async function run() {
     await consumer.connect();
-    await consumer.subscribe({ topic });
-
+    await producer.connect();
+    
+    await consumer.subscribe({ topic: 'issue-certificate' });
+    
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
             const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`;
@@ -23,16 +23,12 @@ async function run() {
 
             const payload = JSON.parse(message.value);
 
-            setTimeout(() => {
-                counter ++;
-
-                producer.send({
-                    topic: 'certificate-response',
-                    messages: [
-                        { value: `Certificate #${counter} generated for user ${payload.user.name}. Course: ${payload.course}, grade: ${payload.grade}` }
-                    ]
-                })
-            }, 3000);
+            producer.send({
+                topic: 'certificate-response',
+                messages: [
+                    { value: `Certificate generated for user ${payload.user.name}. Course: ${payload.course}, grade: ${payload.grade}` }
+                ]
+            });
         }
     })
 }
